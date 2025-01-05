@@ -1,0 +1,20 @@
+
+Language: Cpp
+
+IndentWidth: 4
+PointerAlignment: Left
+ColumnLimit: 160
+
+AlignArrayOfStructures: Right
+
+
+SpaceBeforeParens: Custom
+SpaceBeforeParensOptions:
+  AfterControlStatements: true
+  AfterFunctionDefinitionName: true
+
+SpaceInEmptyBlock: false
+SpaceBeforeAssignmentOperators: true
+
+
+
