@@ -3,10 +3,12 @@ Language: Cpp
 
 IndentWidth: 4
 PointerAlignment: Left
-ColumnLimit: 160
+ColumnLimit: 120
 
 AlignArrayOfStructures: Right
 
+# defines primarily
+AlignEscapedNewlines: Left
 
 SpaceBeforeParens: Custom
 SpaceBeforeParensOptions:
