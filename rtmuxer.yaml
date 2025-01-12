@@ -1,0 +1,9 @@
+
+dynload-gdb:
+  gdb:
+    cmd: gdb -ex "source ./gdbrc"
+
+dynload-build:
+  build-watcher:
+    cmd: watchexec -c -e c,h make -j$(nproc)
+

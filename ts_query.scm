@@ -21,7 +21,7 @@
         declarator: (function_declarator
             declarator: _ @symbol_name
             parameters: (parameter_list
-                (((parameter_declaration)+) @args)
+                (((parameter_declaration)*) @args)
             ) @params
         ) @signature.header
         (#set! type "function")

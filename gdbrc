@@ -1,0 +1,36 @@
+define hook-file
+set confirm off
+end
+
+define hookpost-file
+set confirm on
+end
+
+define hook-kill
+set confirm off
+end
+
+define hookpost-kill
+set confirm on
+end
+
+
+define conn
+target remote | vgdb
+end
+
+define conk
+target remote | vgdb
+kill
+end
+
+define re
+kill
+file ./out/main.host
+run
+end
+
+
+file ./out/main.host
+run
+

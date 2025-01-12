@@ -10,20 +10,22 @@ DYN_CFLAGS := ${CFLAGS}
 
 all_src := $(call rwildcard,${SRCDIR},*.c)
 dyn_src := $(call rwildcard,${SRCDIR},*.dyn.c)
-gen_impl_src := $(call rwildcard,${SRCDIR},*.dyn.impl.gen.c)
+# gen_impl_src := $(call rwildcard,${SRCDIR},*.dyn.impl.gen.c)
 
 generated_dyn_headers := $(call rwildcard,${SRCDIR},*.dyn.gen.h)
 
 dyn_sofiles = $(dyn_src:${SRCDIR}/%.c=${OUTDIR}/%.so)
 dyn_objfiles = $(dyn_src:${SRCDIR}/%.c=${BUILDIR}/%.o)
 dyn_deps := $(dyn_objfiles:%.o=%.d)
+dyn_headerfiles := $(dyn_src:%.dyn.c=%.dyn.gen.h)
 
-unified_src := ${filter-out $(gen_impl_src),${all_src}}
+# unified_src := ${filter-out $(gen_impl_src),${all_src}}
+unified_src := ${all_src}
 unified_objfiles := ${unified_src:${SRCDIR}/%.c=${BUILDIR}/%.o}
 unified_deps := $(unified_objfiles:%.o=%.d)
 
 host_src := ${filter-out $(dyn_src),${all_src}}
-host_src := ${filter-out $(gen_impl_src),${host_src}}
+# host_src := ${filter-out $(gen_impl_src),${host_src}}
 host_objfiles = $(host_src:${SRCDIR}/%.c=${BUILDIR}/%.o)
 host_deps := $(host_objfiles:%.o=%.d)
 
@@ -47,10 +49,14 @@ info:
 	@date +%s
 
 
+u: unified
+
 unified: unified_executable
 	@echo ${unified_src}
 	@echo ${unified_objfiles}
 
+
+${unified_objfiles}: ${dyn_headerfiles}
 
 unified_executable: ${unified_objfiles}
 	@mkdir -p $(OUTDIR)
@@ -58,8 +64,8 @@ unified_executable: ${unified_objfiles}
 
 
 
-build_split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP  -D_DYN_SPLIT_BUILD
-build_split: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC -D_DYN_SPLIT_BUILD
+build_split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP  -D_DYN_SPLIT_BUILD -g
+build_split: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC -D_DYN_SPLIT_BUILD -g
 
 build_split: ${dyn_sofiles} ${host_executable} 
 

@@ -23,7 +23,7 @@ const so_path_abs = resolve(outdir, so_path);
 const gen_path = resolve(srcdir, dyn_c_path_from_src).replace(/\.c$/, '.gen.h');
 
 console.log('Processing', dyn_c_filepath_from_project_root);
-console.log('Abs', dyn_c_filepath_abs);
+// console.log('Abs', dyn_c_filepath_abs);
 
 const dyn_c_src = await Bun.file(dyn_c_filepath_abs).text();
 const tree = parser.parse(dyn_c_src);
@@ -102,12 +102,17 @@ for (const key of Object.keys(symbols).sort()) {
     const s = symbols[key];
     hosted += '\n';
     if (s.is_function) {
-        header_case += s.signature + ';\n';
-        hosted += s.signature.replace(s.name, `(* __ptr_${s.name})`) + ' = 0;\n';
+        let header_signature = s.signature;
+        for (const arg of s.args) {
+            header_signature = header_signature.replace(arg.name, '');
+        }
+        header_case += header_signature + ';\n';
+        hosted += 'static ' + s.signature.replace(s.name, `(* __ptr_${s.name})`) + ' = 0;\n';
         hosted += s.signature + ' {\n';
         hosted += `  static int inited = 0; 
   if (!inited) {
     inited = 1; 
+printf("[PROXY.init] initing ${s.name}\\n");
     reg_dyn("${so_path_abs}", "${s.name}", (void*)&__ptr_${s.name});
   }\n`;
         hosted += '  if (__ptr_' + s.name + ') {\n';
@@ -123,17 +128,22 @@ for (const key of Object.keys(symbols).sort()) {
     }
 }
 
+const guard = dyn_c_path_from_src.replace(/[\/.-]/g, '_').toUpperCase();
+
 hosted = `
+
 #ifndef _DYN_SPLIT_BUILD
 
 ${header_case}
 
 #else
 
+extern int printf (const char *__restrict __format, ...);
 ${hosted}
 
 #endif
 `;
+
 
 
 const header_inc_q = new Parser.Query(C, '(translation_unit (preproc_include (comment) @comment (#match? @comment "// *pub")) @include)');
@@ -145,13 +155,21 @@ for (const m of header_inc_q.matches(tree.rootNode)) {
     }
 }
 
+hosted = `
+#ifndef ${guard}
+#define ${guard}
+
+${hosted}
+#endif
+`;
+
 hosted = '/**\n * File is generated\n **/\n' + hosted;
 
 // console.log(hosted);
 
 const genfile = Bun.file(gen_path);
 if (await genfile.exists()) {
-    console.log('Previously generated file is found at', gen_path);
+    // console.log('Previously generated file is found at', gen_path);
     const existing_txt = await genfile.text();
     if (existing_txt === hosted) {
         console.log('Gen files match. Not rewriting.');
