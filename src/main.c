@@ -1,50 +1,13 @@
-#include "stdio.h"
 #include <assert.h>
 #include <dlfcn.h>
 #include <linux/limits.h>
-#include <string.h>
-#include <time.h>
 #include <unistd.h>
 
-#define DYN(path, symbol, ret)                         \
-    ret {                                              \
-        void* handle = dlopen(path, RTLD_NOW);         \
-        if (!handle)                                   \
-            return;                                    \
-        typeof(symbol)* func = dlsym(handle, #symbol); \
-        if (func) {                                    \
-            func(0, 0);                                \
-        } else {                                       \
-            printf("no kek\n");                        \
-        }                                              \
-        dlclose(handle);                               \
-    }
 
-void hosted () { printf("Hosted Functioon\n"); }
-void hosted2 () { printf("Hosted Functioon2\n"); }
-void hosted3 () { printf("Hosted Functioon 3\n"); }
-
-void do_kek_proto (int a, int b) {
-    void* kek_handle = dlopen("systems/kek.so", RTLD_NOW);
-    printf("handle %p\n", kek_handle);
-    if (!kek_handle) {
-        printf("no handle\n");
-        return;
-    }
-    typeof(do_kek_proto)* func = dlsym(kek_handle, "do_kek");
-    /* void (*func)(int a, int b) = dlsym(kek_handle, "do_kek"); */
-    printf("handle %p\n", do_kek_proto);
-
-    if (func) {
-        func(a, b);
-    } else {
-        printf("no kek\n");
-    }
-    dlclose(kek_handle);
-}
-
-#define DEF(decl) typeof(decl)* fn
-
+#ifdef _DYN_SPLIT_BUILD
+#include "stdio.h"
+#include <string.h>
+#include <time.h>
 struct {
     struct {
         char* module_path;
@@ -57,8 +20,10 @@ struct {
         time_t loaded_ts;
     } modules[100];
 } dyn_handler = {0};
+#endif
 
 void upd_dyn () {
+#ifdef _DYN_SPLIT_BUILD
     time_t now = time(0);
     for (int module_idx = 0; module_idx < 100; module_idx++) {
         typeof(dyn_handler.modules[module_idx])* m = &dyn_handler.modules[module_idx];
@@ -92,8 +57,10 @@ void upd_dyn () {
             }
         }
     }
+#endif
 }
 
+#ifdef _DYN_SPLIT_BUILD
 void reg_dyn (char* mpath, char* symbol, void** target) {
     for (int i = 0; i < 100; i++) {
         typeof(dyn_handler.entries[i])* entry = &dyn_handler.entries[i];
@@ -126,20 +93,17 @@ void reg_dyn (char* mpath, char* symbol, void** target) {
     // no free estate
     assert(0);
 }
+#endif
 
-#define REG_DYN(module, symbol) reg_dyn(module, #symbol, (void**)(&symbol))
-#define CALL_DYN(ident, ...) \
-    if (ident)               \
-    ident(__VA_ARGS__)
-
-void (*do_kek)(int a, int b) = 0;
+#include "systems/kek.dyn.gen.h"
 
 int main (int argc, char** argv) {
-    reg_dyn("systems/kek.so", "do_kek", (void**)(&do_kek));
 
+    int counter = 0;
     while (1) {
         upd_dyn();
-        CALL_DYN(do_kek, 4, 5);
+        do_kek(1, 2);
+        counter += 2;
 
         sleep(2);
     }

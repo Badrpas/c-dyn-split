@@ -1,5 +1,5 @@
 
-#define LUL "__"
+#define LUL "prefix"
 
 void hosted2();
 

@@ -1,24 +1,39 @@
 rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
 
+SRCDIR := src
 OUTDIR := out
+BUILDIR := build
 
-all_src := $(call rwildcard,src,*.c)
-dyn_src := $(call rwildcard,src/systems,*.c)
+HOST_CFLAGS := ${CFLAGS}
+DYN_CFLAGS := ${CFLAGS}
 
-dyn_sofiles = $(dyn_src:src/%.c=${OUTDIR}/%.so)
-dyn_objfiles = $(dyn_src:src/%.c=${OUTDIR}/%.o)
-dyn_deps := $(dyn_sofiles:%.so=%.d)
+all_src := $(call rwildcard,${SRCDIR},*.c)
+dyn_src := $(call rwildcard,${SRCDIR},*.dyn.c)
+gen_impl_src := $(call rwildcard,${SRCDIR},*.dyn.impl.gen.c)
+
+generated_dyn_headers := $(call rwildcard,${SRCDIR},*.dyn.gen.h)
+
+dyn_sofiles = $(dyn_src:${SRCDIR}/%.c=${OUTDIR}/%.so)
+dyn_objfiles = $(dyn_src:${SRCDIR}/%.c=${BUILDIR}/%.o)
+dyn_deps := $(dyn_objfiles:%.o=%.d)
+
+unified_src := ${filter-out $(gen_impl_src),${all_src}}
+unified_objfiles := ${unified_src:${SRCDIR}/%.c=${BUILDIR}/%.o}
+unified_deps := $(unified_objfiles:%.o=%.d)
 
 host_src := ${filter-out $(dyn_src),${all_src}}
-host_objfiles = $(host_src:src/%.c=${OUTDIR}/%.o)
-host_deps := $(host_sofiles:%.so=%.d)
+host_src := ${filter-out $(gen_impl_src),${host_src}}
+host_objfiles = $(host_src:${SRCDIR}/%.c=${BUILDIR}/%.o)
+host_deps := $(host_objfiles:%.o=%.d)
 
-HOST_FILEPATH := ${OUTDIR}/main.host
+host_executable := ${OUTDIR}/main.host
 
-# .PHONY: build_split build_sofiles default info
+# .PHONY: build_split default info
 
-default: build_split info
+# nm  --defined-only -f just-symbols
+
+default: build_split
 
 info:
 	@echo
@@ -32,37 +47,54 @@ info:
 	@date +%s
 
 
-build_unified:
-	@echo Unified build not implemented
+unified: unified_executable
+	@echo ${unified_src}
+	@echo ${unified_objfiles}
 
-build_split: ${HOST_FILEPATH} build_sofiles
 
-${HOST_FILEPATH}: ${host_objfiles}
+unified_executable: ${unified_objfiles}
+	@mkdir -p $(OUTDIR)
+	cc -o ${OUTDIR}/main.unified ${unified_objfiles}
+
+
+
+build_split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP  -D_DYN_SPLIT_BUILD
+build_split: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC -D_DYN_SPLIT_BUILD
+
+build_split: ${dyn_sofiles} ${host_executable} 
+
+build_sofiles: ${dyn_sofiles} 
+
+${host_executable}: ${host_objfiles}
 	@mkdir -p $(@D)
-	cc -o ${HOST_FILEPATH} $^ -rdynamic
+	cc -o ${host_executable} $^ -rdynamic
 
-${host_objfiles}: ${OUTDIR}/%.o: src/%.c
+${host_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 	@mkdir -p $(@D)
-	cc -o ${@} -c $< -MMD -MP
+	cc -o ${@} -c $< ${HOST_CFLAGS}
 
 
-
-build_sofiles: ${dyn_sofiles}
-
-${dyn_sofiles}: %.so: %.o
+${dyn_sofiles}: ${OUTDIR}/%.so: ${BUILDIR}/%.o
 	@mkdir -p $(@D)
 	cc -o ${@} $^  -shared -rdynamic
 
+${dyn_objfiles}: ${BUILDIR}/%.dyn.o: ${SRCDIR}/%.dyn.gen.h
 
-${dyn_objfiles}: ${OUTDIR}/%.o: src/%.c
+
+${dyn_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 	@mkdir -p $(@D)
-	cc -o ${@} -c $< -MMD -MP -fPIC
+	cc -o ${@} -c $< ${DYN_CFLAGS}
 
+%.dyn.gen.h: %.dyn.c
+	bun run ./gen/scan.js $<
 
 -include $(dyn_deps)
 -include $(host_deps)
+-include $(unified_deps)
 
 clean:
-	@rm -rf ${OUTDIR}
+	rm -rf ${BUILDIR}
+	rm -rf ${OUTDIR}
+	rm ${generated_dyn_headers}
 
 
