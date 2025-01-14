@@ -63,7 +63,6 @@ unified_executable: ${unified_objfiles}
 	cc -o ${OUTDIR}/main.unified ${unified_objfiles}
 
 
-
 build_split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP  -D_DYN_SPLIT_BUILD -g
 build_split: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC -D_DYN_SPLIT_BUILD -g
 
@@ -86,13 +85,17 @@ ${dyn_sofiles}: ${OUTDIR}/%.so: ${BUILDIR}/%.o
 
 ${dyn_objfiles}: ${BUILDIR}/%.dyn.o: ${SRCDIR}/%.dyn.gen.h
 
+self_guard = $(shell echo "${<:$(SRCDIR)/%.c=%.c}" | sed -e 's#\([\/_\.-]\)#_#g' | sed -e 's#\(.*\)#\U\1#g')
 
 ${dyn_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 	@mkdir -p $(@D)
-	cc -o ${@} -c $< ${DYN_CFLAGS}
+	cc -o ${@} -c $< ${DYN_CFLAGS} -D$(self_guard)
+	@mv ${@:%.o=%.d} ${@:%.o=%.t}
+	awk -f ./awkrecipe ${@:%.o=%.t} > ${@:%.o=%.d}
+	@rm ${@:%.o=%.t}
 
 %.dyn.gen.h: %.dyn.c
-	bun run ./gen/scan.js $<
+	bun run ./gen/scan.js `realpath $<`
 
 -include $(dyn_deps)
 -include $(host_deps)

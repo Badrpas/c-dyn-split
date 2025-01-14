@@ -1,0 +1,16 @@
+{
+    output = "";
+    while (match($0, /[^[:space:]]+/)) {
+        word = substr($0, RSTART, RLENGTH);
+        if (word ~ /[^\\]/) {
+            cmd = "realpath \"" word "\" --relative-to .";
+            cmd | getline abs_path;
+            close(cmd);
+            word = abs_path;
+        }
+        output = output substr($0, 1, RSTART - 1) word;
+        $0 = substr($0, RSTART + RLENGTH);
+    }
+    print output $0;
+}
+

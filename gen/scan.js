@@ -112,7 +112,7 @@ for (const key of Object.keys(symbols).sort()) {
         hosted += `  static int inited = 0; 
   if (!inited) {
     inited = 1; 
-printf("[PROXY.init] initing ${s.name}\\n");
+    printf("[PROXY.init] initing ${s.name}\\n");
     reg_dyn("${so_path_abs}", "${s.name}", (void*)&__ptr_${s.name});
   }\n`;
         hosted += '  if (__ptr_' + s.name + ') {\n';
