@@ -7,6 +7,7 @@ Makefile-based template to build C code with live reload included.
 
 ```c
 // hello.dyn.c
+// The .dyn suffix marks it as reloadable
 #include <stdio.h>
 
 void say_hello() {
@@ -17,20 +18,22 @@ void say_hello() {
 ```c
 // main.c
 
-// This declares say_hello() function
+// This "declares" say_hello() function.
+// When built as `make split`, it actually implements a proxy function(s).
+// But does declarations otherwise for unified build and proper LSP/intellisense.
 #include "hello.dyn.gen.h" 
 
 int main () {
     while (1) {
         upd_dyn();   // Load/update the hello.dyn.c code
         say_hello(); // Call the `remote` function like regular
-        sleep(1);
+        sleep(1);    // To not overspam it
     }
     return 0;
 }
 ```
 
-Build by running `make`. This will produce `out/main.host` executable.
+Build by running `make split`. This will produce `out/hello.dyn.so` lib and `out/main.host` executable.
 
 Run it to get endless loop of hello messages.
 
@@ -48,4 +51,7 @@ From calling side (host) it is as easy as to include the header and call the fun
 Headers include implementation proxy function that contains a pointer to remote (`.so`) counterpart function.
 
 Host should call `upd_dyn()` to load libs and/or poll for their changes. It also resolves pointers in proxy functions to latest version.
+
+
+Currenlty function proxies are generated via js script and `make` will install [`bun`](https://bun.sh) runtime if not found with `which bun`.
 
