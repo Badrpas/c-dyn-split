@@ -16,15 +16,21 @@ void top();
 
 extern int printf (const char *__restrict __format, ...);
 
-void reg_dyn (char* mpath, char* symbol, void** target);
+void reg_dyn (char* mpath, char* symbol, void** target, void* registrar);
 
 static void (* __ptr_top)() = 0;
 void top() {
   static int inited = 0; 
   if (!inited) {
     inited = 1; 
-printf("[PROXY.init] initing top\n");
-    reg_dyn("/home/grug/projects/anotherreloadc/out/systems/top.dyn.so", "top", (void*)&__ptr_top);
+    printf("[PROXY.init] initing top\n");
+    reg_dyn(
+        "/home/grug/projects/anotherreloadc/out/systems/top.dyn.so",
+        "top",
+        (void*)&__ptr_top,
+        //(void*)&inited
+        "src/systems/top.dyn.c"
+    );
   }
   if (__ptr_top) {
     return __ptr_top();

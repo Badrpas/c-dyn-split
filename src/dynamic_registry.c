@@ -5,6 +5,7 @@
 
 #include "stdio.h"
 #include <assert.h>
+#define __USE_GNU
 #include <dlfcn.h>
 #include <linux/limits.h>
 #include <string.h>
@@ -17,10 +18,35 @@
 #define MAX_BINDINGS 100
 #define MAX_NAME_LEN 255
 
+void *dlmopen(Lmid_t lmid, const char *filename, int flags);
+
+struct {
+    const char* mname; /* Pathname of shared object that
+                          contains address */
+    void* base;        /* Address at which shared object
+                          is loaded */
+    const char* sname; /* Name of nearest symbol with address
+                          lower than addr */
+    void* saddr;       /* Exact address of symbol named
+                          in dli_sname */
+} __dl_info = {0};
+static typeof(__dl_info)* dl_info = &__dl_info;
+/* int dladdr(void* addr, typeof(__dl_info)* info); */
+
+typeof(dl_info) sinfo (void* addr) {
+    if (dladdr(addr, (Dl_info*)dl_info)) {
+        return dl_info;
+    }
+    return 0;
+}
+
+
 typedef struct {
     int module_idx;
     char symbol[MAX_NAME_LEN + 1];
     void** bind_target;
+    void* registrar;
+    int registrar_module_idx;
 } Binding;
 typedef struct {
     char module_path[MAX_NAME_LEN + 1];
@@ -30,17 +56,16 @@ typedef struct {
 } Module;
 
 typedef struct {
-    Binding entries[MAX_BINDINGS];
+    Binding binds[MAX_BINDINGS];
     Module modules[MAX_MODULES];
 } DYN_HANDLER;
 
-DYN_HANDLER dyn_handler = {0};
+DYN_HANDLER Reg = {0};
 
-static Module* find_module (char* m_name) {
+static Module* find_module (const char* m_name) {
     for (int i = 1; i < MAX_MODULES; i++) {
-        if (m_name && !strcmp(dyn_handler.modules[i].module_path, m_name) ||
-            (!m_name && !dyn_handler.modules[i].handle)) {
-            return &dyn_handler.modules[i];
+        if (m_name && !strcmp(Reg.modules[i].module_path, m_name) || (!m_name && !Reg.modules[i].handle)) {
+            return &Reg.modules[i];
         }
     }
     return 0;
@@ -48,9 +73,9 @@ static Module* find_module (char* m_name) {
 
 static Binding* find_binding (char* m_name, char* e_symbol, void** target) {
     for (int i = 1; i < MAX_BINDINGS; i++) {
-        Binding* b = &dyn_handler.entries[i];
+        Binding* b = &Reg.binds[i];
         if (e_symbol && !strcmp(b->symbol, e_symbol) && m_name && b->module_idx &&
-            !strcmp(dyn_handler.modules[b->module_idx].module_path, m_name) && target && target == b->bind_target) {
+            !strcmp(Reg.modules[b->module_idx].module_path, m_name) && target && target == b->bind_target) {
             return b;
         }
     }
@@ -58,7 +83,7 @@ static Binding* find_binding (char* m_name, char* e_symbol, void** target) {
 }
 static Binding* acquire_binding () {
     for (int i = 1; i < MAX_BINDINGS; i++) {
-        Binding* b = &dyn_handler.entries[i];
+        Binding* b = &Reg.binds[i];
         if (!b->module_idx)
             return b;
     }
@@ -66,23 +91,8 @@ static Binding* acquire_binding () {
     return 0;
 }
 
-static int calc_module_idx (Module* m) {
-    return ((long long)(void*)m - (long long)(void*)&dyn_handler.modules) / sizeof(*m);
-}
-static int calc_binding_idx (Binding* b) {
-    return ((long long)(void*)b - (long long)(void*)&dyn_handler.entries) / sizeof(*b);
-}
-
-struct {
-    const char* dli_fname; /* Pathname of shared object that
-                              contains address */
-    void* dli_fbase;       /* Address at which shared object
-                              is loaded */
-    const char* dli_sname; /* Name of nearest symbol with address
-                              lower than addr */
-    void* dli_saddr;       /* Exact address of symbol named
-                              in dli_sname */
-} __dl_info = {0};
+static int calc_module_idx (Module* m) { return ((long long)(void*)m - (long long)(void*)&Reg.modules) / sizeof(*m); }
+static int calc_binding_idx (Binding* b) { return ((long long)(void*)b - (long long)(void*)&Reg.binds) / sizeof(*b); }
 
 static char* err = 0;
 #define CHECK_ERR(stage)                                        \
@@ -97,7 +107,7 @@ static int update_needed = 0;
 void upd_dyn () {
     time_t now = time(0);
     for (int module_idx = 1; module_idx < MAX_MODULES; module_idx++) {
-        Module* m = &dyn_handler.modules[module_idx];
+        Module* m = &Reg.modules[module_idx];
         if (!m->module_path[0]) {
             continue;
         }
@@ -124,17 +134,28 @@ void upd_dyn () {
 
         void* prev_handle = m->handle;
         if (m->handle) {
-            /* printf("[UPD] closing %p\n", m->handle); */
+            int midx = calc_module_idx(m);
+            if (midx) {
+                // Try to unregister all symbols defined by the unloading module
+                // This won't work all the time. It might be OK to keep stale references for time being...
+                for (int i = 1; i < MAX_BINDINGS; i++) {
+                    Binding* b = &Reg.binds[i];
+                    if (b->registrar_module_idx && b->registrar_module_idx == midx) {
+                        printf("[UPD.unload] Clearing binding idx=%i sym=%s m=%s registrar=%p\n", i, b->symbol, m->module_path, b->registrar);
+                        *b = (Binding){0};
+                    }
+                }
+            } else {
+                printf("[UPD.??] Couldn't find midx of m=%s\n", m->module_path);
+            }
             dlclose(m->handle);
             CHECK_ERR(CLOSING);
         }
 
-        m->handle = dlopen(m->module_path, RTLD_LAZY);
+        m->handle = dlopen(m->module_path, RTLD_NOW);
         CHECK_ERR(OPENING);
         if (prev_handle != m->handle) {
             printf("[UPD] handle changed %p -> %p\n", prev_handle, m->handle);
-            /* } else { */
-            /* printf("[UPD] handle unchanged\n"); */
         }
         update_needed = 1;
     }
@@ -143,27 +164,29 @@ void upd_dyn () {
         printf("[UPD] Nothing changed\n");
         return;
     } else {
-        printf("[UPD] Changes occured\n");
+        /* printf("[UPD] Changes occured\n"); */
     };
 
     update_needed = 0;
 
     for (int i = 1; i < MAX_BINDINGS; i++) {
-        Binding b = dyn_handler.entries[i];
-        if (!b.module_idx)
+        Binding* b = &Reg.binds[i];
+        if (!b->module_idx)
             continue;
-        Module m = dyn_handler.modules[b.module_idx];
-        void* sym = dlsym(m.handle, b.symbol);
+        Module* m = &Reg.modules[b->module_idx];
+        void* sym = dlsym(m->handle, b->symbol);
         CHECK_ERR(SYMBOL_RESOLVE);
         if (sym) {
-            printf("[UPD] Set %s to %p\n", b.symbol, sym);
-            *b.bind_target = sym;
+            printf("[UPD] Set %s to %p\n", b->symbol, sym);
+            *b->bind_target = sym;
         }
     }
 }
 
-void reg_dyn (char* mpath, char* symbol, void** target) {
-    printf("[DYN.REG] Registering %s : %s -> %p\n", mpath, symbol, target);
+static void unregister(void* registrar);
+
+void reg_dyn (char* mpath, char* symbol, void** target, void* registrar) {
+    printf("[DYN.REG] Registering m=%s : s=%s -> t=%p; registar=%p\n", mpath, symbol, target, registrar);
     Module* m = find_module(mpath);
     if (!m) {
         m = find_module(0);
@@ -181,6 +204,19 @@ void reg_dyn (char* mpath, char* symbol, void** target) {
         assert(b);
         b->module_idx = calc_module_idx(m);
         b->bind_target = target;
+        b->registrar = registrar;
+        if (dladdr(registrar, (Dl_info*)dl_info)) {
+            Module* self = find_module(dl_info->mname);
+            if (self) {
+                int midx = calc_module_idx(self);
+                b->registrar_module_idx = midx;
+                printf("[DYN.REG] Found registrar to be %s midx=%i\n", self->module_path, midx);
+            } else {
+                printf("[DYN.REG] Couldn't find registrar (%p) module\n", registrar);
+            }
+        } else {
+            printf("[DYN.REG.dladdr.fail] Couldn't dladdr\n");
+        }
         strcpy(b->symbol, symbol);
         printf("[DYN.REG] Added entry for '%s' idx=%i ptr_at=%p\n", b->symbol, calc_binding_idx(b), b->bind_target);
     }
@@ -188,6 +224,8 @@ void reg_dyn (char* mpath, char* symbol, void** target) {
     update_needed = 1;
     upd_dyn();
 }
+
+static void unregister (void* registrar) {}
 
 #else
 void upd_dyn () {}

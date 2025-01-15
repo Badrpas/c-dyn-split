@@ -1,3 +1,4 @@
+#include <stdint.h> // pub
 #include <stdio.h>
 #include <unistd.h>
 
@@ -8,8 +9,8 @@ int subhost_ret123 () {
     return 123;
 }
 
-int subhost_ret777 () {
-    return 777;
+uint64_t subhost_ret777 () {
+    return 7777777777777;
 }
 
 int subhost_kokoko () {

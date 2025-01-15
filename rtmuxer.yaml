@@ -5,5 +5,5 @@ dynload-gdb:
 
 dynload-build:
   build-watcher:
-    cmd: watchexec -c -e c,h make -j$(nproc)
+    cmd: watchexec -c -e c,h time -p make -j$(nproc)
 

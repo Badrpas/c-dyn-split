@@ -21,7 +21,7 @@ static struct {
 int dladdr(void *addr, typeof(__dl_info) *info);
 
 void do_kek (int a, int BBB) {
-    printf(LUL " + do_kek(%i, %i); koka = %i\n", a, BBB, subhost_koka());
+    printf(LUL " + do_kek(%i, %i); koka = %lu\n", a, BBB, subhost_ret777());
     dladdr((void*)do_kek, &__dl_info);
     printf(LUL " + %s\n", __dl_info.dli_sname);
 }

@@ -97,7 +97,7 @@ let updater = '';
 
 let header_case = '';
 
-hosted += '\nvoid reg_dyn (char* mpath, char* symbol, void** target);\n';
+hosted += '\nvoid reg_dyn (char* mpath, char* symbol, void** target, void* registrar);\n';
 for (const key of Object.keys(symbols).sort()) {
     const s = symbols[key];
     hosted += '\n';
@@ -113,7 +113,13 @@ for (const key of Object.keys(symbols).sort()) {
   if (!inited) {
     inited = 1; 
     printf("[PROXY.init] initing ${s.name}\\n");
-    reg_dyn("${so_path_abs}", "${s.name}", (void*)&__ptr_${s.name});
+    reg_dyn(
+        "${so_path_abs}",
+        "${s.name}",
+        (void*)&__ptr_${s.name},
+        //(void*)&inited
+        "${dyn_c_filepath_from_project_root}"
+    );
   }\n`;
         hosted += '  if (__ptr_' + s.name + ') {\n';
         hosted += '    return __ptr_' + s.name + '(' + s.args.map(arg => arg.name).join(', ') + ');\n';
@@ -124,7 +130,6 @@ for (const key of Object.keys(symbols).sort()) {
           hosted+='  return ___ret;\n';
         }
         hosted += '}\n';
-
     }
 }
 
