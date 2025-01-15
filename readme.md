@@ -7,7 +7,7 @@ Makefile-based template to build C code with live reload included.
 
 ```c
 // hello.dyn.c
-// The .dyn suffix marks it as reloadable
+// The .dyn suffix marks it as a reloadable
 #include <stdio.h>
 
 void say_hello() {
@@ -20,7 +20,7 @@ void say_hello() {
 
 // This "declares" say_hello() function.
 // When built as `make split`, it actually implements a proxy function(s).
-// But does declarations otherwise for unified build and proper LSP/intellisense.
+// But does declarations otherwise for `make unified` build and proper LSP/intellisense.
 #include "hello.dyn.gen.h" 
 
 int main () {
