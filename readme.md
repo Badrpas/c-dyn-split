@@ -1,6 +1,6 @@
 # C Split
 
-Makefile-based template to build C code with live reload included.
+Makefile-based template to build C code with live reload.
 
 
 ### Example
