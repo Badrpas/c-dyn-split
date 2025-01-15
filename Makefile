@@ -33,7 +33,7 @@ host_executable := ${OUTDIR}/main.host
 
 
 
-default: build_split
+default: split
 
 info:
 	@echo
@@ -61,10 +61,10 @@ unified_executable: ${unified_objfiles}
 	cc -o ${OUTDIR}/main.unified ${unified_objfiles}
 
 
-build_split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP  -D_DYN_SPLIT_BUILD -g
-build_split: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC -D_DYN_SPLIT_BUILD -g
+split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP  -D_DYN_SPLIT_BUILD -g
+split: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC -D_DYN_SPLIT_BUILD -g
 
-build_split: ${dyn_sofiles} ${host_executable} 
+split: ${dyn_sofiles} ${host_executable} 
 
 build_sofiles: ${dyn_sofiles} 
 

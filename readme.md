@@ -37,7 +37,7 @@ Build by running `make split`. This will produce `out/hello.dyn.so` lib and `out
 
 Run it to get endless loop of hello messages.
 
-Change the message in say_hello. Execute `make` again (while `out/main.host` is still running).
+Change the message in say_hello. Execute `make split` again (while `out/main.host` is still running).
 
 ??? Profit
 
