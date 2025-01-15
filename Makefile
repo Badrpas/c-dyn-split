@@ -1,5 +1,5 @@
-rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
+rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
 SRCDIR := src
 OUTDIR := out
@@ -31,9 +31,7 @@ host_deps := $(host_objfiles:%.o=%.d)
 
 host_executable := ${OUTDIR}/main.host
 
-# .PHONY: build_split default info
 
-# nm  --defined-only -f just-symbols
 
 default: build_split
 
