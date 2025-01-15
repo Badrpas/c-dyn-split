@@ -94,12 +94,23 @@ ${dyn_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 	awk -f ./awkrecipe ${@:%.o=%.t} > ${@:%.o=%.d}
 	@rm ${@:%.o=%.t}
 
-%.dyn.gen.h: %.dyn.c
+%.dyn.gen.h: %.dyn.c gen/node_modules/tree-sitter/index.js
 	bun run ./gen/scan.js `realpath $<`
+
+bunpath := $(shell which bun)
+bunpath := $(if $(bunpath),$(bunpath),trigger_bun_install)
+
+gen/node_modules/tree-sitter/index.js: $(bunpath)
+	cd gen && bun i
+
+$(bunpath):
+	curl -fsSL https://bun.sh/install | bash
 
 -include $(dyn_deps)
 -include $(host_deps)
 -include $(unified_deps)
+
+
 
 clean:
 	rm -rf ${BUILDIR}
