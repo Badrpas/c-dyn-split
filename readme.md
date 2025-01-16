@@ -8,6 +8,7 @@ Makefile-based template to build C code with live reload.
 ```c
 // hello.dyn.c
 // The .dyn suffix marks it as a reloadable
+
 #include <stdio.h>
 
 void say_hello() {
