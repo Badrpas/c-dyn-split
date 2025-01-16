@@ -58,3 +58,10 @@ Host should call `upd_dyn()` to load libs and/or poll for their changes. It also
 
 Currenlty function proxies are generated via js script and `make` will install [`bun`](https://bun.sh) runtime if not found with `which bun`.
 
+
+#### todo
+
+- migrate codegen to c
+- encapsulate everything in one dir
+- better initial setup experience (curl? single Makefile download?)
+
