@@ -1,6 +1,5 @@
 #include <unistd.h>
 #define _DYN_SPLIT_BUILD
-
 #ifdef _DYN_SPLIT_BUILD
 
 #include "stdio.h"
@@ -14,11 +13,11 @@
 
 #define UPDATE_INTERVAL_SECONDS 1.0
 
-#define MAX_MODULES 100
-#define MAX_BINDINGS 100
+#define MAX_MODULES 1024
+#define MAX_BINDINGS 1024
 #define MAX_NAME_LEN 255
 
-void *dlmopen(Lmid_t lmid, const char *filename, int flags);
+void* dlmopen(Lmid_t lmid, const char* filename, int flags);
 
 struct {
     const char* mname; /* Pathname of shared object that
@@ -39,7 +38,6 @@ typeof(dl_info) sinfo (void* addr) {
     }
     return 0;
 }
-
 
 typedef struct {
     int module_idx;
@@ -64,7 +62,7 @@ DYN_HANDLER Reg = {0};
 
 static Module* find_module (const char* m_name) {
     for (int i = 1; i < MAX_MODULES; i++) {
-        if (m_name && !strcmp(Reg.modules[i].module_path, m_name) || (!m_name && !Reg.modules[i].handle)) {
+        if ((m_name && !strcmp(Reg.modules[i].module_path, m_name)) || (!m_name && !Reg.modules[i].handle)) {
             return &Reg.modules[i];
         }
     }
@@ -104,7 +102,7 @@ static char* err = 0;
 
 static int update_needed = 0;
 
-void upd_dyn () {
+void cdynsplit_update () {
     time_t now = time(0);
     for (int module_idx = 1; module_idx < MAX_MODULES; module_idx++) {
         Module* m = &Reg.modules[module_idx];
@@ -141,7 +139,8 @@ void upd_dyn () {
                 for (int i = 1; i < MAX_BINDINGS; i++) {
                     Binding* b = &Reg.binds[i];
                     if (b->registrar_module_idx && b->registrar_module_idx == midx) {
-                        printf("[UPD.unload] Clearing binding idx=%i sym=%s m=%s registrar=%p\n", i, b->symbol, m->module_path, b->registrar);
+                        printf("[UPD.unload] Clearing binding idx=%i sym=%s m=%s registrar=%p\n", i, b->symbol,
+                               m->module_path, b->registrar);
                         *b = (Binding){0};
                     }
                 }
@@ -183,9 +182,7 @@ void upd_dyn () {
     }
 }
 
-static void unregister(void* registrar);
-
-void reg_dyn (char* mpath, char* symbol, void** target, void* registrar) {
+void cdynsplit_reg (char* mpath, char* symbol, void** target, void* registrar) {
     printf("[DYN.REG] Registering m=%s : s=%s -> t=%p; registar=%p\n", mpath, symbol, target, registrar);
     Module* m = find_module(mpath);
     if (!m) {
@@ -222,12 +219,10 @@ void reg_dyn (char* mpath, char* symbol, void** target, void* registrar) {
     }
 
     update_needed = 1;
-    upd_dyn();
+    cdynsplit_update();
 }
 
-static void unregister (void* registrar) {}
-
 #else
-void upd_dyn () {}
-void reg_dyn (char* mpath, char* symbol, void** target) {}
+void cdynsplit_update () {}
+void cdynsplit_reg (char* mpath, char* symbol, void** target) {}
 #endif

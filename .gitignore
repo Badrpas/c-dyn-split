@@ -5,3 +5,5 @@ node_modules
 
 *.dyn.gen.h
 
+.cache/
+

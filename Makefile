@@ -5,12 +5,13 @@ SRCDIR := src
 OUTDIR := out
 BUILDIR := build
 
+CFLAGS += -Wall
+
 HOST_CFLAGS := ${CFLAGS}
 DYN_CFLAGS := ${CFLAGS}
 
 all_src := $(call rwildcard,${SRCDIR},*.c)
 dyn_src := $(call rwildcard,${SRCDIR},*.dyn.c)
-# gen_impl_src := $(call rwildcard,${SRCDIR},*.dyn.impl.gen.c)
 
 generated_dyn_headers := $(call rwildcard,${SRCDIR},*.dyn.gen.h)
 
@@ -19,13 +20,11 @@ dyn_objfiles = $(dyn_src:${SRCDIR}/%.c=${BUILDIR}/%.o)
 dyn_deps := $(dyn_objfiles:%.o=%.d)
 dyn_headerfiles := $(dyn_src:%.dyn.c=%.dyn.gen.h)
 
-# unified_src := ${filter-out $(gen_impl_src),${all_src}}
 unified_src := ${all_src}
 unified_objfiles := ${unified_src:${SRCDIR}/%.c=${BUILDIR}/%.o}
 unified_deps := $(unified_objfiles:%.o=%.d)
 
 host_src := ${filter-out $(dyn_src),${all_src}}
-# host_src := ${filter-out $(gen_impl_src),${host_src}}
 host_objfiles = $(host_src:${SRCDIR}/%.c=${BUILDIR}/%.o)
 host_deps := $(host_objfiles:%.o=%.d)
 
@@ -49,16 +48,25 @@ info:
 
 u: unified
 
+unified: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP
+unified: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC
+
 unified: unified_executable
+	@echo
+	@echo unified_src
 	@echo ${unified_src}
+	@echo unified_objfiles
 	@echo ${unified_objfiles}
+	@echo
 
 
 ${unified_objfiles}: ${dyn_headerfiles}
 
-unified_executable: ${unified_objfiles}
+${OUTDIR}/main.unified: ${unified_objfiles} c-dyn-split/dynamic_registry.o
 	@mkdir -p $(OUTDIR)
-	cc -o ${OUTDIR}/main.unified ${unified_objfiles}
+	cc -o ${host_executable} $^
+
+unified_executable: ${OUTDIR}/main.unified
 
 
 split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP  -D_DYN_SPLIT_BUILD -g
@@ -68,7 +76,7 @@ split: ${dyn_sofiles} ${host_executable}
 
 build_sofiles: ${dyn_sofiles} 
 
-${host_executable}: ${host_objfiles}
+${host_executable}: ${host_objfiles} c-dyn-split/dynamic_registry.o
 	@mkdir -p $(@D)
 	cc -o ${host_executable} $^ -rdynamic
 
@@ -76,6 +84,9 @@ ${host_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 	@mkdir -p $(@D)
 	cc -o ${@} -c $< ${HOST_CFLAGS}
 
+DYNREG_CFLAGS = -D_DYN_SPLIT_BUILD
+
+c-dyn-split/dynamic_registry.o: CFLAGS+=-fPIC -g -D_DYN_SPLIT_BUILD
 
 ${dyn_sofiles}: ${OUTDIR}/%.so: ${BUILDIR}/%.o
 	@mkdir -p $(@D)
@@ -89,17 +100,17 @@ ${dyn_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 	@mkdir -p $(@D)
 	cc -o ${@} -c $< ${DYN_CFLAGS} -D$(self_guard)
 	@mv ${@:%.o=%.d} ${@:%.o=%.t}
-	awk -f ./awkrecipe ${@:%.o=%.t} > ${@:%.o=%.d}
+	awk -f ./c-dyn-split/awkrecipe ${@:%.o=%.t} > ${@:%.o=%.d}
 	@rm ${@:%.o=%.t}
 
-%.dyn.gen.h: %.dyn.c gen/node_modules/tree-sitter/index.js
-	bun run ./gen/scan.js `realpath $<`
+%.dyn.gen.h: %.dyn.c c-dyn-split/gen/node_modules/tree-sitter/index.js
+	bun run ./c-dyn-split/gen/scan.js `realpath $<`
 
 bunpath := $(shell which bun)
 bunpath := $(if $(bunpath),$(bunpath),trigger_bun_install)
 
 gen/node_modules/tree-sitter/index.js: $(bunpath)
-	cd gen && bun i
+	cd c-dyn-split/gen && bun i
 
 $(bunpath):
 	curl -fsSL https://bun.sh/install | bash
@@ -111,8 +122,6 @@ $(bunpath):
 
 
 clean:
-	rm -rf ${BUILDIR}
-	rm -rf ${OUTDIR}
-	rm ${generated_dyn_headers}
+	rm -rf ${BUILDIR} ${OUTDIR} ${generated_dyn_headers} c-dyn-split/dynamic_registry.o
 
 

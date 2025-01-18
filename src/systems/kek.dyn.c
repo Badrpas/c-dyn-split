@@ -1,11 +1,12 @@
 #include <inttypes.h> // pub
-#define _GNU_SOURCE
-#include <dlfcn.h> // pub
+#define _GNU_SOURCE   // pub
+#include <dlfcn.h>    // pub
 #include "stdio.h"
 #include "dummy.h"
 
 #include "kek.dyn.gen.h"
 #include "../sub_host.dyn.gen.h"
+
 
 static struct {
     const char* dli_fname; /* Pathname of shared object that
@@ -20,9 +21,13 @@ static struct {
 
 int dladdr(void *addr, typeof(__dl_info) *info);
 
+extern int global_frame;
+
 void do_kek (int a, int BBB) {
-    printf(LUL " + do_kek(%i, %i); koka = %lu\n", a, BBB, subhost_ret777());
+    printf(LUL " + do_kek(%i, %i); koka = %i\n", a, BBB, subhost_ret123());
     dladdr((void*)do_kek, &__dl_info);
-    printf(LUL " + %s\n", __dl_info.dli_sname);
+    global_frame += 5;
+    printf(LUL " + %s dokeks global_framve=%i\n", __dl_info.dli_sname, global_frame);
 }
+
 

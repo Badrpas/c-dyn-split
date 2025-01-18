@@ -1,17 +1,19 @@
 #include <stdio.h>
-void upd_dyn();
-
+extern void cdynsplit_update();
 
 #include "sub_host.dyn.gen.h"
 
+int global_frame = 0;
+
+int potentially_global () { return 111; }
+
 int main (int argc, char** argv) {
-    int frame = 0;
     while (1) {
-        frame += 1;
-        printf(">>> Frame %i begin\n", frame);
-        upd_dyn();
+        global_frame += 1;
+        printf(">>> Frame %i begin\n", global_frame);
+        cdynsplit_update();
         sub_host_update();
-        printf(">>> Frame %i end\n", frame);
+        printf(">>> Frame %i end\n", global_frame);
     }
 
     return 0;
