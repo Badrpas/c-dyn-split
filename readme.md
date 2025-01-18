@@ -28,9 +28,9 @@ extern unsigned int sleep (unsigned int __seconds); // or `#include <unistd.h>`
 
 int main () {
     while (1) {
-        upd_dyn();   // Load/update the hello.dyn.c code
-        say_hello(); // Call the "remote" function in regular way
-        sleep(1);    // To not overspam it
+        cdynsplit_update(); // Load/update the hello.dyn.c code
+        say_hello();        // Call the "remote" function in regular way
+        sleep(1);           // To not overspam it
     }
     return 0;
 }
