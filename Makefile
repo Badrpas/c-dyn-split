@@ -1,6 +1,8 @@
 
 rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
+C_DYN_DIR := c-dyn-split
+
 SRCDIR := src
 OUTDIR := out
 BUILDIR := build
@@ -62,7 +64,7 @@ unified: unified_executable
 
 ${unified_objfiles}: ${dyn_headerfiles}
 
-${OUTDIR}/main.unified: ${unified_objfiles} c-dyn-split/dynamic_registry.o
+${OUTDIR}/main.unified: ${unified_objfiles} ${C_DYN_DIR}/dynamic_registry.o
 	@mkdir -p $(OUTDIR)
 	cc -o ${host_executable} $^
 
@@ -76,7 +78,7 @@ split: ${dyn_sofiles} ${host_executable}
 
 build_sofiles: ${dyn_sofiles} 
 
-${host_executable}: ${host_objfiles} c-dyn-split/dynamic_registry.o
+${host_executable}: ${host_objfiles} ${C_DYN_DIR}/dynamic_registry.o
 	@mkdir -p $(@D)
 	cc -o ${host_executable} $^ -rdynamic
 
@@ -85,7 +87,7 @@ ${host_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 	cc -o ${@} -c $< ${HOST_CFLAGS}
 
 
-c-dyn-split/dynamic_registry.o: CFLAGS+=-fPIC -g -D_DYN_SPLIT_BUILD
+${C_DYN_DIR}/dynamic_registry.o: CFLAGS+=-fPIC -g -D_DYN_SPLIT_BUILD
 
 ${dyn_sofiles}: ${OUTDIR}/%.so: ${BUILDIR}/%.o
 	@mkdir -p $(@D)
@@ -99,17 +101,17 @@ ${dyn_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 	@mkdir -p $(@D)
 	cc -o ${@} -c $< ${DYN_CFLAGS} -D$(self_guard)
 	@mv ${@:%.o=%.d} ${@:%.o=%.t}
-	awk -f ./c-dyn-split/awkrecipe ${@:%.o=%.t} > ${@:%.o=%.d}
+	awk -f ./${C_DYN_DIR}/awkrecipe ${@:%.o=%.t} > ${@:%.o=%.d}
 	@rm ${@:%.o=%.t}
 
-%.dyn.gen.h: %.dyn.c c-dyn-split/gen/node_modules/tree-sitter/index.js
-	bun run ./c-dyn-split/gen/scan.js `realpath $<`
+%.dyn.gen.h: %.dyn.c ${C_DYN_DIR}/gen/node_modules/tree-sitter/index.js
+	bun run ./${C_DYN_DIR}/gen/scan.js `realpath $<`
 
 bunpath := $(shell which bun)
 bunpath := $(if $(bunpath),$(bunpath),trigger_bun_install)
 
 gen/node_modules/tree-sitter/index.js: $(bunpath)
-	cd c-dyn-split/gen && bun i
+	cd ${C_DYN_DIR}/gen && bun i
 
 $(bunpath):
 	curl -fsSL https://bun.sh/install | bash
@@ -120,17 +122,17 @@ $(bunpath):
 
 
 update:
-	mkdir -p c-dyn-split/downloads
-	curl https://codeload.github.com/badrpas/c-dyn-split/tar.gz/master > c-dyn-split/downloads/latest.tar.gz
-	cd ./c-dyn-split/ && \
+	mkdir -p ${C_DYN_DIR}/downloads
+	curl https://codeload.github.com/badrpas/c-dyn-split/tar.gz/master > ${C_DYN_DIR}/downloads/latest.tar.gz
+	cd ./${C_DYN_DIR}/ && \
 		tar -xzf ./downloads/latest.tar.gz --strip=2 c-dyn-split-master/c-dyn-split
-	cd ./c-dyn-split/ && \
+	cd ./${C_DYN_DIR}/ && \
 		tar -xzf ./downloads/latest.tar.gz --strip=1 c-dyn-split-master/readme.md
-	tar -xzf ./c-dyn-split/downloads/latest.tar.gz --strip=1 c-dyn-split-master/Makefile
+	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/Makefile
 
 
 
 clean:
-	rm -rf ${BUILDIR} ${OUTDIR} ${generated_dyn_headers} c-dyn-split/dynamic_registry.o
+	rm -rf ${BUILDIR} ${OUTDIR} ${generated_dyn_headers} ${C_DYN_DIR}/dynamic_registry.o
 
 
