@@ -124,7 +124,7 @@ download:
 	mkdir -p ${C_DYN_DIR}/downloads
 	curl https://codeload.github.com/badrpas/c-dyn-split/tar.gz/master > ${C_DYN_DIR}/downloads/latest.tar.gz
 
-init: download .gitignore
+init: download .gitignore rtmuxer.yaml gdbrc ${SRCDIR}/main.c
 	cd ${C_DYN_DIR} && tar -xzf ./downloads/latest.tar.gz --strip=2 c-dyn-split-master/c-dyn-split
 	cd ${C_DYN_DIR} && tar -xzf ./downloads/latest.tar.gz --strip=1 c-dyn-split-master/readme.md
 
@@ -141,8 +141,9 @@ gdbrc: download
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/gdbrc.yaml
 
 ${SRCDIR}/main.c: download
+	@echo [!] No main.c file is found. Adding example files
 	mkdir -p ${SRCDIR}
-	echo "int main() { return 0; }" > ${SRCDIR}/main.c
+	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/src
 	
 
 clean:
