@@ -120,9 +120,14 @@ $(bunpath):
 
 
 update:
-	mkdir -p c-dyn-split
-	curl https://codeload.github.com/badrpas/c-dyn-split/tar.gz/master | \
-		tar -xz --strip=1 c-dyn-split-master/c-dyn-split
+	mkdir -p c-dyn-split/downloads
+	curl https://codeload.github.com/badrpas/c-dyn-split/tar.gz/master > c-dyn-split/downloads/latest.tar.gz
+	cd ./c-dyn-split/ && \
+		tar -xzf ./downloads/latest.tar.gz --strip=2 c-dyn-split-master/c-dyn-split
+	cd ./c-dyn-split/ && \
+		tar -xzf ./downloads/latest.tar.gz --strip=1 c-dyn-split-master/readme.md
+	tar -xzf ./c-dyn-split/downloads/latest.tar.gz --strip=1 c-dyn-split-master/Makefile
+
 
 
 clean:
