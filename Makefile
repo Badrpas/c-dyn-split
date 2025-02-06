@@ -131,9 +131,8 @@ init: download
 update_self: download
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/Makefile
 
-
-
 clean:
-	rm -rf ${BUILDIR} ${OUTDIR} ${generated_dyn_headers} ${C_DYN_DIR}/dynamic_registry.o
+	rm -rf ${BUILDIR} ${OUTDIR} ${generated_dyn_headers} ${C_DYN_DIR}/dynamic_registry.o ${C_DYN_DIR}/downloads
+
 
 
