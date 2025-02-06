@@ -138,7 +138,7 @@ rtmuxer.yaml: download
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/rtmuxer.yaml
 
 gdbrc: download
-	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/gdbrc.yaml
+	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/gdbrc
 
 ${SRCDIR}/main.c: download
 	@echo [!] No main.c file is found. Adding example files
