@@ -2,6 +2,13 @@
 
 Makefile-based template to build C code with live reload.
 
+### Install
+
+Oneliner to init everything.
+
+```shell
+curl https://raw.githubusercontent.com/badrpas/c-dyn-split/master/Makefile > Makefile && make init
+```
 
 ### Example
 
