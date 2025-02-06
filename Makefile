@@ -84,7 +84,6 @@ ${host_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 	@mkdir -p $(@D)
 	cc -o ${@} -c $< ${HOST_CFLAGS}
 
-DYNREG_CFLAGS = -D_DYN_SPLIT_BUILD
 
 c-dyn-split/dynamic_registry.o: CFLAGS+=-fPIC -g -D_DYN_SPLIT_BUILD
 
@@ -119,6 +118,11 @@ $(bunpath):
 -include $(host_deps)
 -include $(unified_deps)
 
+
+install:
+	mkdir -p c-dyn-split
+	curl https://codeload.github.com/badrpas/c-dyn-split/tar.gz/master | \
+		tar -xz --strip=2 c-dyn-split-master/c-dyn-split
 
 
 clean:
