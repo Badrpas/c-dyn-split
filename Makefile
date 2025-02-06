@@ -119,10 +119,10 @@ $(bunpath):
 -include $(unified_deps)
 
 
-install:
+update:
 	mkdir -p c-dyn-split
 	curl https://codeload.github.com/badrpas/c-dyn-split/tar.gz/master | \
-		tar -xz --strip=2 c-dyn-split-master/c-dyn-split
+		tar -xz --strip=1 c-dyn-split-master/c-dyn-split
 
 
 clean:
