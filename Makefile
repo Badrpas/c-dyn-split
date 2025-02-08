@@ -1,7 +1,7 @@
 
 rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
 
-C_DYN_DIR := c-dyn-split
+C_DYN_DIR := .c-dyn-split
 
 SRCDIR := src
 OUTDIR := out
@@ -126,7 +126,7 @@ ${C_DYN_DIR}/downloads/latest.tar.gz:
 
 
 init: ${C_DYN_DIR}/downloads/latest.tar.gz .gitignore rtmuxer.yaml gdbrc ${SRCDIR}/main.c
-	cd ${C_DYN_DIR} && tar -xzf ./downloads/latest.tar.gz --strip=2 c-dyn-split-master/c-dyn-split
+	cd ${C_DYN_DIR} && tar -xzf ./downloads/latest.tar.gz --strip=2 c-dyn-split-master/.c-dyn-split
 	cd ${C_DYN_DIR} && tar -xzf ./downloads/latest.tar.gz --strip=1 c-dyn-split-master/readme.md
 
 update_self: ${C_DYN_DIR}/downloads/latest.tar.gz
@@ -141,7 +141,7 @@ rtmuxer.yaml: ${C_DYN_DIR}/downloads/latest.tar.gz
 gdbrc: ${C_DYN_DIR}/downloads/latest.tar.gz
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/gdbrc
 
-${SRCDIR}/main.c: ${C_DYN_DIR}/downloads/latest.tar.gz
+$(SRCDIR)/main.c: ${C_DYN_DIR}/downloads/latest.tar.gz
 	@echo [!] No main.c file is found. Adding example files
 	mkdir -p ${SRCDIR}
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/src
