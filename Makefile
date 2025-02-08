@@ -125,7 +125,7 @@ ${C_DYN_DIR}/downloads/latest.tar.gz:
 	curl https://codeload.github.com/badrpas/c-dyn-split/tar.gz/master > ${C_DYN_DIR}/downloads/latest.tar.gz
 
 
-init: ${C_DYN_DIR}/downloads/latest.tar.gz .gitignore rtmuxer.yaml gdbrc ${SRCDIR}/main.c
+init: ${C_DYN_DIR}/downloads/latest.tar.gz .gitignore rtmuxer.yaml gdbrc
 	cd ${C_DYN_DIR} && tar -xzf ./downloads/latest.tar.gz --strip=2 c-dyn-split-master/.c-dyn-split
 	cd ${C_DYN_DIR} && tar -xzf ./downloads/latest.tar.gz --strip=1 c-dyn-split-master/readme.md
 
@@ -145,13 +145,19 @@ gdbrc: ${C_DYN_DIR}/downloads/latest.tar.gz
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/gdbrc
 	touch $@
 
-$(SRCDIR)/main.c: ARCHIVE = ${shell realpath ${C_DYN_DIR}/downloads/latest.tar.gz}
-$(SRCDIR)/main.c: ${C_DYN_DIR}/downloads/latest.tar.gz
-	@echo [!] No main.c file is found. Adding example files
+ifeq ($(wildcard ${SRCDIR}/main.c),)
+init: example_basic
+example_basic: ${C_DYN_DIR}/downloads/latest.tar.gz
 	mkdir -p ${SRCDIR}
 	cd ${SRCDIR} && tar -xzf ${ARCHIVE} --strip=3 c-dyn-split-master/examples/basic
 	touch $@
-	
+else
+example_basic:
+	@echo ${SRCDIR}/main.c exists. Skipping example init.
+endif
+
+example_basic: ARCHIVE = ${shell realpath ${C_DYN_DIR}/downloads/latest.tar.gz}
+
 
 clean:
 	rm -rf ${BUILDIR} ${OUTDIR} ${generated_dyn_headers} ${C_DYN_DIR}/dynamic_registry.o ${C_DYN_DIR}/downloads
