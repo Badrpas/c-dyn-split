@@ -110,7 +110,7 @@ ${dyn_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 bunpath := $(shell which bun)
 bunpath := $(if $(bunpath),$(bunpath),trigger_bun_install)
 
-gen/node_modules/tree-sitter/index.js: $(bunpath)
+${C_DYN_DIR}/gen/node_modules/tree-sitter/index.js: $(bunpath)
 	cd ${C_DYN_DIR}/gen && bun i
 
 $(bunpath):
@@ -145,6 +145,7 @@ $(SRCDIR)/main.c: ${C_DYN_DIR}/downloads/latest.tar.gz
 	@echo [!] No main.c file is found. Adding example files
 	mkdir -p ${SRCDIR}
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/src
+	touch $@
 	
 
 clean:
