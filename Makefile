@@ -134,7 +134,7 @@ update_self: ${C_DYN_DIR}/downloads/latest.tar.gz
 	touch Makefile
 
 .gitignore: ${C_DYN_DIR}/downloads/latest.tar.gz
-	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/.gitignore
+	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=2 c-dyn-split-master/internals/.gitignore
 	touch $@
 
 rtmuxer.yaml: ${C_DYN_DIR}/downloads/latest.tar.gz
@@ -160,6 +160,5 @@ example_basic: ARCHIVE = ${shell realpath ${C_DYN_DIR}/downloads/latest.tar.gz}
 
 clean:
 	rm -rf ${BUILDIR} ${OUTDIR} ${generated_dyn_headers} ${C_DYN_DIR}/dynamic_registry.o ${C_DYN_DIR}/downloads
-
 
 
