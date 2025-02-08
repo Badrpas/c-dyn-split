@@ -71,8 +71,8 @@ ${OUTDIR}/main.unified: ${unified_objfiles} ${C_DYN_DIR}/dynamic_registry.o
 unified_executable: ${OUTDIR}/main.unified
 
 
-split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP -g -D_DYN_SPLIT_BUILD -DDYNCSPLIT_LOG_HIDE_DEBUG
-split: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC -g -D_DYN_SPLIT_BUILD -DDYNCSPLIT_LOG_HIDE_DEBUG
+split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP -g -D_DYN_SPLIT_BUILD
+split: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC -g -D_DYN_SPLIT_BUILD
 
 split: ${dyn_sofiles} ${host_executable} 
 
@@ -87,7 +87,7 @@ ${host_objfiles}: ${BUILDIR}/%.o: ${SRCDIR}/%.c
 	cc -o ${@} -c $< ${HOST_CFLAGS}
 
 
-${C_DYN_DIR}/dynamic_registry.o: CFLAGS+=-fPIC -g -D_DYN_SPLIT_BUILD
+${C_DYN_DIR}/dynamic_registry.o: CFLAGS+=-fPIC -g -D_DYN_SPLIT_BUILD -DDYNCSPLIT_LOG_HIDE_DEBUG
 
 ${dyn_sofiles}: ${OUTDIR}/%.so: ${BUILDIR}/%.o
 	@mkdir -p $(@D)
