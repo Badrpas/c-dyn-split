@@ -145,10 +145,11 @@ gdbrc: ${C_DYN_DIR}/downloads/latest.tar.gz
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/gdbrc
 	touch $@
 
+$(SRCDIR)/main.c: ARCHIVE = ${shell realpath ${C_DYN_DIR}/downloads/latest.tar.gz}
 $(SRCDIR)/main.c: ${C_DYN_DIR}/downloads/latest.tar.gz
 	@echo [!] No main.c file is found. Adding example files
 	mkdir -p ${SRCDIR}
-	cd ${SRCDIR} && tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=3 c-dyn-split-master/examples/basic
+	cd ${SRCDIR} && tar -xzf ${ARCHIVE} --strip=3 c-dyn-split-master/examples/basic
 	touch $@
 	
 
