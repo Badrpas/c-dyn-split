@@ -1,4 +1,5 @@
 #include <unistd.h>
+#define _DYN_SPLIT_BUILD
 #ifdef _DYN_SPLIT_BUILD
 
 #include "stdio.h"
@@ -116,7 +117,9 @@ void cdynsplit_update () {
 
         struct stat out = {0};
         if (stat(m->module_path, &out) != 0) {
+            #ifndef DYNCSPLIT_LOG_HIDE_ERR
             printf("[UPD.ERR] Couldn't stat %s\n", m->module_path);
+            #endif
             continue;
         }
         time_t so_created_at = out.st_ctim.tv_sec;
@@ -127,7 +130,9 @@ void cdynsplit_update () {
         double creation_diff = difftime(so_created_at, m->created_at);
         m->created_at = so_created_at;
 
+        #ifndef DYNCSPLIT_LOG_HIDE_INFO
         printf("[UPD] Updating %.2f %s\n", creation_diff, m->module_path);
+        #endif
 
         void* prev_handle = m->handle;
         if (m->handle) {
@@ -138,13 +143,17 @@ void cdynsplit_update () {
                 for (int i = 1; i < MAX_BINDINGS; i++) {
                     Binding* b = &Reg.binds[i];
                     if (b->registrar_module_idx && b->registrar_module_idx == midx) {
+                        #ifndef DYNCSPLIT_LOG_HIDE_INFO
                         printf("[UPD.unload] Clearing binding idx=%i sym=%s m=%s registrar=%p\n", i, b->symbol,
                                m->module_path, b->registrar);
+                        #endif
                         *b = (Binding){0};
                     }
                 }
             } else {
+                #ifndef DYNCSPLIT_LOG_HIDE_ERR
                 printf("[UPD.??] Couldn't find midx of m=%s\n", m->module_path);
+                #endif
             }
             dlclose(m->handle);
             CHECK_ERR(CLOSING);
@@ -153,16 +162,18 @@ void cdynsplit_update () {
         m->handle = dlopen(m->module_path, RTLD_NOW);
         CHECK_ERR(OPENING);
         if (prev_handle != m->handle) {
+            #ifndef DYNCSPLIT_LOG_HIDE_INFO
             printf("[UPD] handle changed %p -> %p\n", prev_handle, m->handle);
+            #endif
         }
         update_needed = 1;
     }
 
     if (!update_needed) {
+        #ifndef DYNCSPLIT_LOG_HIDE_DEBUG
         printf("[UPD] Nothing changed\n");
+        #endif
         return;
-    } else {
-        /* printf("[UPD] Changes occured\n"); */
     };
 
     update_needed = 0;
@@ -175,14 +186,18 @@ void cdynsplit_update () {
         void* sym = dlsym(m->handle, b->symbol);
         CHECK_ERR(SYMBOL_RESOLVE);
         if (sym) {
+            #ifndef DYNCSPLIT_LOG_HIDE_INFO
             printf("[UPD] Set %s to %p\n", b->symbol, sym);
+            #endif
             *b->bind_target = sym;
         }
     }
 }
 
 void cdynsplit_reg (char* mpath, char* symbol, void** target, void* registrar) {
+    #ifndef DYNCSPLIT_LOG_HIDE_INFO
     printf("[DYN.REG] Registering m=%s : s=%s -> t=%p; registar=%p\n", mpath, symbol, target, registrar);
+    #endif
     Module* m = find_module(mpath);
     if (!m) {
         m = find_module(0);
@@ -191,7 +206,9 @@ void cdynsplit_reg (char* mpath, char* symbol, void** target, void* registrar) {
         m->handle = 0;
         m->update_ts = 0;
         m->created_at = 0;
+        #ifndef DYNCSPLIT_LOG_HIDE_INFO
         printf("[DYN.REG] Added module '%s' at %i\n", m->module_path, calc_module_idx(m));
+        #endif
     }
 
     Binding* b = find_binding(mpath, symbol, target);
@@ -206,15 +223,23 @@ void cdynsplit_reg (char* mpath, char* symbol, void** target, void* registrar) {
             if (self) {
                 int midx = calc_module_idx(self);
                 b->registrar_module_idx = midx;
+                #ifndef DYNCSPLIT_LOG_HIDE_INFO
                 printf("[DYN.REG] Found registrar to be %s midx=%i\n", self->module_path, midx);
+                #endif
             } else {
+                #ifndef DYNCSPLIT_LOG_HIDE_ERR
                 printf("[DYN.REG] Couldn't find registrar (%p) module\n", registrar);
+                #endif
             }
         } else {
+            #ifndef DYNCSPLIT_LOG_HIDE_ERR
             printf("[DYN.REG.dladdr.fail] Couldn't dladdr\n");
+            #endif
         }
         strcpy(b->symbol, symbol);
+        #ifndef DYNCSPLIT_LOG_HIDE_INFO
         printf("[DYN.REG] Added entry for '%s' idx=%i ptr_at=%p\n", b->symbol, calc_binding_idx(b), b->bind_target);
+        #endif
     }
 
     update_needed = 1;

@@ -71,8 +71,8 @@ ${OUTDIR}/main.unified: ${unified_objfiles} ${C_DYN_DIR}/dynamic_registry.o
 unified_executable: ${OUTDIR}/main.unified
 
 
-split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP  -D_DYN_SPLIT_BUILD -g
-split: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC -D_DYN_SPLIT_BUILD -g
+split: HOST_CFLAGS := ${HOST_CFLAGS} -MMD -MP -g -D_DYN_SPLIT_BUILD -DDYNCSPLIT_LOG_HIDE_DEBUG
+split: DYN_CFLAGS := ${DYN_CFLAGS} -MMD -MP -fPIC -g -D_DYN_SPLIT_BUILD -DDYNCSPLIT_LOG_HIDE_DEBUG
 
 split: ${dyn_sofiles} ${host_executable} 
 
