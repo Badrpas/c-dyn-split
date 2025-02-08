@@ -131,15 +131,19 @@ init: ${C_DYN_DIR}/downloads/latest.tar.gz .gitignore rtmuxer.yaml gdbrc ${SRCDI
 
 update_self: ${C_DYN_DIR}/downloads/latest.tar.gz
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/Makefile
+	touch Makefile
 
 .gitignore: ${C_DYN_DIR}/downloads/latest.tar.gz
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/.gitignore
+	touch $@
 
 rtmuxer.yaml: ${C_DYN_DIR}/downloads/latest.tar.gz
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/rtmuxer.yaml
+	touch $@
 
 gdbrc: ${C_DYN_DIR}/downloads/latest.tar.gz
 	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/gdbrc
+	touch $@
 
 $(SRCDIR)/main.c: ${C_DYN_DIR}/downloads/latest.tar.gz
 	@echo [!] No main.c file is found. Adding example files
