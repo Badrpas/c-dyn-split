@@ -1,5 +1,5 @@
 #include <unistd.h>
-#define _DYN_SPLIT_BUILD
+
 #ifdef _DYN_SPLIT_BUILD
 
 #include "stdio.h"
