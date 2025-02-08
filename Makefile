@@ -150,7 +150,6 @@ init: example_basic
 example_basic: ${C_DYN_DIR}/downloads/latest.tar.gz
 	mkdir -p ${SRCDIR}
 	cd ${SRCDIR} && tar -xzf ${ARCHIVE} --strip=3 c-dyn-split-master/examples/basic
-	touch $@
 else
 example_basic:
 	@echo ${SRCDIR}/main.c exists. Skipping example init.
