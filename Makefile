@@ -148,7 +148,7 @@ gdbrc: ${C_DYN_DIR}/downloads/latest.tar.gz
 $(SRCDIR)/main.c: ${C_DYN_DIR}/downloads/latest.tar.gz
 	@echo [!] No main.c file is found. Adding example files
 	mkdir -p ${SRCDIR}
-	tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=1 c-dyn-split-master/src
+	cd ${SRCDIR} && tar -xzf ./${C_DYN_DIR}/downloads/latest.tar.gz --strip=3 c-dyn-split-master/examples/basic
 	touch $@
 	
 
