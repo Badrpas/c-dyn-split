@@ -2,13 +2,24 @@
 
 Makefile-based template to build C code with live reload.
 
-### Install
+### Quickstart
 
-Oneliner to init everything.
+Oneliner to init everything:
 
 ```shell
 curl https://raw.githubusercontent.com/badrpas/c-dyn-split/master/Makefile > Makefile && make init
 ```
+
+Then build
+```shell
+make
+```
+
+This will produce `out/main.host` executable and `out/sub.dyn.so`. Run the `out/main.host` and keep it running.
+
+Update `src/sub.dyn.c`, rebuild with `make` and observe the change applied.
+
+Done.
 
 ### Example
 
