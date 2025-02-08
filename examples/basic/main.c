@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 
 extern void cdynsplit_update();
 
@@ -10,6 +11,7 @@ int main (int argc, char** argv) {
         cdynsplit_update();
         thisisdynamicfoo();
         printf("Hello from main.c loop\n");
+        sleep(1);
     }
 
     return 0;
